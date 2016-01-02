@@ -28,6 +28,9 @@ all: $(TARGET)
 	mmd -i fat.img ::/EFI/BOOT
 	mcopy -i fat.img $(TARGET) ::/EFI/BOOT
 
+fetch:
+	bash fetch.sh
+
 BOOTX64.so:
 	x86_64-elf-gcc $(CFLAGS) -c -o main.o main.c
 	x86_64-elf-gcc $(CFLAGS) -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -Wall -Wextra
