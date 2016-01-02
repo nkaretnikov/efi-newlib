@@ -1,0 +1,11 @@
+Implement Newlib syscalls using UEFI functions.
+
+Toolchain: https://github.com/nkaretnikov/efi-newlib-toolchain
+
+Links:
+* http://www.rodsbooks.com/efi-programming/hello.html
+* http://www.tianocore.org/ovmf/
+* http://wiki.osdev.org/UEFI
+* http://wiki.osdev.org/UEFI_Bare_Bones
+* https://sourceware.org/newlib/libc.html#sprintf
+* https://sourceware.org/newlib/libc.html#Syscalls
