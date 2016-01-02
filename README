@@ -1,6 +1,8 @@
 Implement Newlib syscalls using UEFI functions.
 
-Toolchain: https://github.com/nkaretnikov/efi-newlib-toolchain
+HOWTO:
+* Build the toolchain: https://github.com/nkaretnikov/efi-newlib-toolchain
+* make fetch && make && make run
 
 Links:
 * http://www.rodsbooks.com/efi-programming/hello.html
