@@ -1,6 +1,6 @@
 ARCH            = x86_64
 
-OBJS            = main.o syscalls.o kernel.o
+OBJS            = main.o syscalls.o select.o kernel.o
 TARGET          = BOOTX64.efi
 
 EFIINC          = $(HOME)/x86_64/include/efi
@@ -11,14 +11,14 @@ EFI_LDS         = $(EFILIB)/elf_$(ARCH)_efi.lds
 NEWLIBINC       = $(HOME)/x86_64/x86_64-elf/include
 NEWLIBLIB       = $(HOME)/x86_64/x86_64-elf/lib
 
-CFLAGS          = $(EFIINCS) -I$(NEWLIBINC) -fno-stack-protector -fpic \
+CFLAGS          = -fPIC $(EFIINCS) -I$(NEWLIBINC) -fno-stack-protector \
 		  -fshort-wchar -mno-red-zone -Wall -O0
 ifeq ($(ARCH),x86_64)
   CFLAGS += -DEFI_FUNCTION_WRAPPER
 endif
 
 LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
-		  -Bsymbolic -L $(EFILIB) $(EFI_CRT_OBJS) -L $(NEWLIBLIB)
+		  -L $(EFILIB) $(EFI_CRT_OBJS) -L $(NEWLIBLIB)
 
 all: $(TARGET)
 	# Make a FAT image.
@@ -34,9 +34,10 @@ fetch:
 BOOTX64.so:
 	x86_64-elf-gcc $(CFLAGS) -c -o main.o main.c
 	x86_64-elf-gcc $(CFLAGS) -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -Wall -Wextra
+	x86_64-elf-gcc $(CFLAGS) -c -o select.o select.c
 	x86_64-elf-gcc $(CFLAGS) -c syscalls.c -o syscalls.o -std=gnu99 -ffreestanding -Wall -Wextra
 
-	x86_64-elf-ld $(LDFLAGS) $(OBJS) -o $@ -lefi -lgnuefi -lc
+	x86_64-elf-ld $(LDFLAGS) $(OBJS) -Bstatic -lc -Bsymbolic -lefi -lgnuefi -o $@
 
 %.efi: %.so
 	objcopy -j .text -j .sdata -j .data -j .dynamic \
