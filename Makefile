@@ -3,13 +3,14 @@ ARCH            = x86_64
 OBJS            = main.o syscalls.o select.o kernel.o
 TARGET          = BOOTX64.efi
 
-EFIINC          = $(HOME)/x86_64/include/efi
+TOOLCHAIN       = $(HOME)/x86_64-elf
+EFIINC          = $(TOOLCHAIN)/include/efi
 EFIINCS         = -I$(EFIINC) -I$(EFIINC)/$(ARCH) -I$(EFIINC)/protocol
-EFILIB          = $(HOME)/x86_64/lib
+EFILIB          = $(TOOLCHAIN)/lib
 EFI_CRT_OBJS    = $(EFILIB)/crt0-efi-$(ARCH).o
 EFI_LDS         = $(EFILIB)/elf_$(ARCH)_efi.lds
-NEWLIBINC       = $(HOME)/x86_64/x86_64-elf/include
-NEWLIBLIB       = $(HOME)/x86_64/x86_64-elf/lib
+NEWLIBINC       = $(TOOLCHAIN)/x86_64-elf/include
+NEWLIBLIB       = $(TOOLCHAIN)/x86_64-elf/lib
 
 CFLAGS          = -fPIC $(EFIINCS) -I$(NEWLIBINC) -fno-stack-protector \
 		  -fshort-wchar -mno-red-zone -Wall -O0
