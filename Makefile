@@ -16,7 +16,7 @@ NEWLIBLIB       = $(TOOLCHAIN)/x86_64-elf/lib
 POLLINC         = $(CURDIR)/include
 STUBLIB         = $(CURDIR)/lib
 
-CFLAGS          = -fPIC $(EFIINCS) -I$(NEWLIBINC) -I$(POLLINC) -fno-stack-protector \
+CFLAGS          = -fpic $(EFIINCS) -I$(NEWLIBINC) -I$(POLLINC) -fno-stack-protector \
 		  -fshort-wchar -mno-red-zone -Wall -O0
 ifeq ($(ARCH),x86_64)
   CFLAGS += -DEFI_FUNCTION_WRAPPER
@@ -28,8 +28,8 @@ LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
 
 all: $(TARGET)
 	# Make a FAT image.
-	dd if=/dev/zero of=fat.img bs=1k count=1440
-	mformat -i fat.img -f 1440 ::
+	dd if=/dev/zero of=fat.img bs=1k count=2880
+	mformat -i fat.img -f 2880 ::
 	mmd -i fat.img ::/EFI
 	mmd -i fat.img ::/EFI/BOOT
 	mcopy -i fat.img $(TARGET) ::/EFI/BOOT
@@ -37,21 +37,35 @@ all: $(TARGET)
 fetch:
 	bash fetch.sh
 
-BOOTX64.so:
-	x86_64-elf-gcc $(CFLAGS) -c -o main.o main.c
-	x86_64-elf-gcc $(CFLAGS) -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -Wall -Wextra
-	x86_64-elf-gcc $(CFLAGS) -c -o select.o select.c
-	x86_64-elf-gcc $(CFLAGS) -c -o poll.o poll.c
-	mkdir $(STUBLIB)
-	x86_64-elf-ar cr $(STUBLIB)/libstub.a $(STUBOBJS)
-	x86_64-elf-gcc $(CFLAGS) -c syscalls.c -o syscalls.o -std=gnu99 -ffreestanding -Wall -Wextra
+# BOOTX64.so:
+# 	x86_64-elf-gcc $(CFLAGS) -c -o main.o main.c
+# 	x86_64-elf-gcc $(CFLAGS) -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -Wall -Wextra
+# 	x86_64-elf-gcc $(CFLAGS) -c -o select.o select.c
+# 	x86_64-elf-gcc $(CFLAGS) -c -o poll.o poll.c
+# 	mkdir $(STUBLIB)
+# 	x86_64-elf-ar cr $(STUBLIB)/libstub.a $(STUBOBJS)
+# 	x86_64-elf-gcc $(CFLAGS) -c syscalls.c -o syscalls.o -std=gnu99 -ffreestanding -Wall -Wextra
 
-	x86_64-elf-ld $(LDFLAGS) $(OBJS) -Bstatic -lc -Bsymbolic -lefi -lgnuefi -lstub -o $@
+# 	x86_64-elf-ld $(LDFLAGS) $(OBJS) -Bstatic -lc -Bsymbolic -lefi -lgnuefi -lstub -o $@
 
-%.efi: %.so
-	objcopy -j .text -j .sdata -j .data -j .dynamic \
-		-j .dynsym  -j .rel -j .rela -j .reloc \
-		--target=efi-app-$(ARCH) $^ $@
+# %.efi: %.so
+# 	objcopy -j .text -j .sdata -j .data -j .dynamic \
+# 		-j .dynsym  -j .rel -j .rela -j .reloc \
+# 		--target=efi-app-$(ARCH) $^ $@
+
+BOOTX64.efi:
+	x86_64-elf-gcc $(CFLAGS) $(LDFLAGS) \
+	  -std=gnu99 -ffreestanding -Wextra \
+	  main.c kernel.c syscalls.c \
+	  -Bstatic -lc -Bsymbolic -lefi -lgnuefi \
+	  -Xlinker --defsym=_DYNAMIC=0 \
+	  -o BOOTX64.so
+
+	  objcopy -j .text -j .sdata -j .data -j .dynamic \
+		  -j .dynsym  -j .rel -j .rela -j .reloc \
+		  --target=efi-app-x86_64 \
+		  BOOTX64.so BOOTX64.efi
+
 
 run:
 	qemu-system-x86_64 -L OVMF -bios OVMF.fd -usb -usbdevice disk::fat.img
